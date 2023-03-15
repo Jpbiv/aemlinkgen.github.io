@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Quick and dirty AEM Link Generator</title>
+</head>
+<style>
+@font-face {
+  font-family: "Ciutadella-Regular";
+  src: url("https://shopping.qantas.com/static/fonts/Ciutadella-Regular.woff") format("woff"); }
+
+</style>
+<body>
+
+<div class="wrapper" style ="font-family: Arial, Helvetica, sans-serif; text-align: center;">
+    <label>Input JIRA number</label>
+    <input id="jobNumber" type="text"></input>
+</div>
+<p></p>
+<div id="output" style="font-family: 'Ciutadella-Regular', Arial, Helvetica, sans-serif; text-align: center; padding: 15px; min-height: 200px; white-space: pre-line; border: 1px dashed #323232;"
+     ondragenter="document.getElementById('output').textContent = ''; event.stopPropagation(); event.preventDefault();"
+     ondragover="event.stopPropagation(); event.preventDefault();"
+     ondrop="event.stopPropagation(); event.preventDefault();
+     dodrop(event);">
+     Drag and drop your files to convert to image links. Please enter the JIRA number in lowercase first eg. qlcs-1234
+</div>
+
+<script>
+
+function dodrop(event)
+{
+  var dt = event.dataTransfer;
+  var files = dt.files;
+  var jobNumber = document.getElementById("jobNumber").value;
+  var count = files.length;
+  
+  output("Here you go:" + "\n");
+
+    for (var i = 0; i < files.length; i++) {
+      output("https://www.qantas.com/images/per/apex/" + jobNumber + "/" + files[i].name + "\n");
+    }
+}
+
+function output(text)
+{
+  document.getElementById("output").textContent += text;
+  //dump(text);
+}
+
+</script>
+
+
+</body>
+</html>
