@@ -1,54 +1,199 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>AEM Link Generator</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEM Link Generator V2</title>
+    <!-- Inter font from Google Fonts (similar to Helvetica) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Apply Inter font to the whole body */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Custom styles for the drag-and-drop area */
+        .drop-area {
+            border: 2px dashed #cbd5e0; /* gray-300 */
+            transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+        }
+
+        .drop-area.drag-over {
+            border-color: #3b82f6; /* blue-500 */
+            background-color: #eff6ff; /* blue-50 */
+        }
+
+        /* Custom class for 50px border-radius */
+        .rounded-50px {
+            border-radius: 50px;
+        }
+    </style>
 </head>
-<style>
-@font-face {
-  font-family: "Ciutadella-Regular";
-  src: url("https://shopping.qantas.com/static/fonts/Ciutadella-Regular.woff") format("woff"); }
+<body class="bg-[#f0e6dc] flex items-center justify-center min-h-screen p-4">
 
-</style>
-<body>
+    <div class="container bg-white p-8 rounded-50px shadow-lg text-center w-full max-w-2xl">
+        <h1 class="text-4xl font-bold text-gray-800 mb-6">AEM Link Generator V2</h1>
 
-<div class="wrapper" style ="font-family: Arial, Helvetica, sans-serif; text-align: center;">
-    <label>Input JIRA number</label>
-    <input id="jobNumber" type="text"></input>
-</div>
-<p></p>
-<div id="output" style="font-family: 'Ciutadella-Regular', Arial, Helvetica, sans-serif; text-align: center; padding: 15px; min-height: 200px; white-space: pre-line; border: 1px dashed #323232;"
-     ondragenter="document.getElementById('output').textContent = ''; event.stopPropagation(); event.preventDefault();"
-     ondragover="event.stopPropagation(); event.preventDefault();"
-     ondrop="event.stopPropagation(); event.preventDefault();
-     dodrop(event);">
-     Drag and drop your files to convert to image links. Please enter the JIRA number in lowercase first eg. qlcs-1234
-</div>
+        <div class="input-group mb-6">
+            <label for="jobNumber" class="block text-lg font-medium text-gray-700 mb-3">Input Monday.com number (e.g., qlcs-1234)</label>
+            <input
+                id="jobNumber"
+                type="text"
+                placeholder="Enter Monday.com number in lowercase"
+                class="w-full px-5 py-3 border border-gray-300 rounded-lg text-xl text-center focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+            >
+        </div>
 
-<script>
+        <div
+            id="dropArea"
+            class="drop-area p-8 min-h-[150px] flex items-center justify-center text-center text-gray-600 rounded-lg cursor-pointer text-lg mb-6"
+            ondragenter="handleDragEnter(event);"
+            ondragleave="handleDragLeave(event);"
+            ondragover="event.preventDefault();"
+            ondrop="handleDrop(event);"
+        >
+            Drag and drop your files here to convert to image links.
+        </div>
 
-function dodrop(event)
-{
-  var dt = event.dataTransfer;
-  var files = dt.files;
-  var jobNumber = document.getElementById("jobNumber").value;
-  var count = files.length;
-  
-   output("Here they are:" + "\n");
+        <div class="output-section bg-[#f3f2f1] p-6 rounded-lg border border-gray-200 text-left relative">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Generated Links:</h2>
+            <div id="outputLinks" class="min-h-[100px] max-h-[300px] overflow-y-auto bg-white p-4 rounded-md border border-gray-100 text-gray-800 text-sm whitespace-pre-wrap break-words">
+                <!-- Generated links will appear here -->
+                No files dropped yet.
+            </div>
+            <div class="flex justify-end space-x-3 mt-4">
+                <button
+                    id="clearOutputBtn"
+                    class="px-5 py-2 bg-[#011e41] text-white rounded-lg hover:bg-[#022a5a] focus:outline-none focus:ring-2 focus:ring-[#011e41] focus:ring-opacity-50 transition duration-200 shadow-md"
+                >
+                    Clear Output
+                </button>
+                <button
+                    id="copyAllLinksBtn"
+                    class="px-5 py-2 bg-[#DF0000] text-white rounded-lg hover:bg-[#B00000] focus:outline-none focus:ring-2 focus:ring-[#DF0000] focus:ring-opacity-50 transition duration-200 shadow-md"
+                >
+                    Copy All Links
+                </button>
+            </div>
+        </div>
+    </div>
 
-    for (var i = 0; i < files.length; i++) {
-      output("https://www.qantas.com/images/per/apex/" + jobNumber + "/" + files[i].name + "\n");
-    }
-}
+    <script>
+        // Get references to DOM elements
+        const jobNumberInput = document.getElementById("jobNumber");
+        const dropArea = document.getElementById("dropArea");
+        const outputLinks = document.getElementById("outputLinks");
+        const clearOutputBtn = document.getElementById("clearOutputBtn");
+        const copyAllLinksBtn = document.getElementById("copyAllLinksBtn");
 
-function output(text)
-{
-  document.getElementById("output").textContent += text;
-  //dump(text);
-}
+        // --- Drag and Drop Handlers ---
 
-</script>
+        /**
+         * Handles the 'dragenter' event for the drop area.
+         * Prevents default behavior and adds a visual class.
+         * @param {Event} event - The dragenter event object.
+         */
+        function handleDragEnter(event) {
+            event.stopPropagation();
+            event.preventDefault();
+            dropArea.classList.add('drag-over');
+        }
 
+        /**
+         * Handles the 'dragleave' event for the drop area.
+         * Removes the visual class.
+         * @param {Event} event - The dragleave event object.
+         */
+        function handleDragLeave(event) {
+            event.stopPropagation();
+            event.preventDefault();
+            dropArea.classList.remove('drag-over');
+        }
+
+        /**
+         * Handles the 'drop' event for the drop area.
+         * Processes dropped files to generate AEM links.
+         * @param {Event} event - The drop event object.
+         */
+        function handleDrop(event) {
+            event.stopPropagation();
+            event.preventDefault();
+            dropArea.classList.remove('drag-over'); // Remove drag-over class on drop
+
+            const dt = event.dataTransfer;
+            const files = dt.files;
+            const jobNumber = jobNumberInput.value.trim(); // Get and trim JIRA number
+
+            // Clear previous output before adding new links
+            outputLinks.textContent = ''; // Ensure it's completely empty before adding new content
+
+            if (!jobNumber) {
+                outputLinks.textContent = "Please enter a Monday.com number first (e.g., qlcs-1234).";
+                return;
+            }
+
+            if (files.length === 0) {
+                outputLinks.textContent = "No files were dropped or files are not supported.";
+                return;
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                const fileName = files[i].name;
+                const link = `https://www.qantas.com/images/per/apex/${jobNumber}/${fileName}`;
+                outputLinks.textContent += link + "\n";
+            }
+        }
+
+        // --- Utility Functions ---
+
+        /**
+         * Clears the content of the output area.
+         */
+        function clearOutput() {
+            outputLinks.textContent = "No files dropped yet.";
+        }
+
+        /**
+         * Copies all generated links from the output area to the clipboard.
+         */
+        function copyAllLinks() {
+            const textToCopy = outputLinks.textContent;
+            if (textToCopy === "No files dropped yet." || textToCopy.includes("Please enter a Monday.com number")) {
+                // No links to copy or an error message is displayed
+                return;
+            }
+
+            const tempInput = document.createElement('textarea');
+            tempInput.value = textToCopy;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand('copy');
+                // Optional: Provide user feedback
+                alert('All links copied to clipboard!'); // Using alert as per previous pattern, but modal is preferred
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy links. Please try again.'); // Using alert as per previous pattern
+            } finally {
+                document.body.removeChild(tempInput);
+            }
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            clearOutputBtn.addEventListener('click', clearOutput);
+            copyAllLinksBtn.addEventListener('click', copyAllLinks);
+        });
+
+        // Make functions globally accessible for inline event handlers
+        window.handleDragEnter = handleDragEnter;
+        window.handleDragLeave = handleDragLeave;
+        window.handleDrop = handleDrop;
+    </script>
 
 </body>
 </html>
